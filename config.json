@@ -1,0 +1,9 @@
+{
+    "terminology_groups": {
+        "vehicles": ["car", "auto", "automobile", "vehicle"],
+        "software": ["program", "application", "app", "software"],
+        "database": ["db", "database", "data store"]
+    },
+    "output_format": ["txt", "csv", "org", "md"],
+    "include_context": true
+}
