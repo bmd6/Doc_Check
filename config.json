@@ -1,8 +1,20 @@
 {
     "terminology_groups": {
-        "vehicles": ["car", "auto", "automobile", "vehicle"],
-        "software": ["program", "application", "app", "software"],
-        "database": ["db", "database", "data store"]
+        "testing": [
+            "integration and test",
+            "integration & test",
+            "test group",
+            "systems engineering test",
+            "integration testing",
+            "test"
+        ],
+        "requirements": [
+            "requirements",
+            "requirements specification",
+            "system requirements",
+            "requirements document",
+            "specification"
+        ]
     },
     "output_format": ["txt", "csv", "org", "md"],
     "include_context": true
