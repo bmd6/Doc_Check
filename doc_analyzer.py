@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Set, Optional, Tuple
 import docx
 import re
 import json
@@ -8,6 +8,7 @@ import csv
 import logging
 from enum import Enum
 import sys
+from itertools import tee
 
 # Set up logging
 logging.basicConfig(
@@ -25,10 +26,11 @@ class OutputFormat(Enum):
 @dataclass
 class Issue:
     type: str
-    word: str
+    term: str  # Changed from 'word' to 'term' to better reflect multi-word support
     page: int
     section: Optional[str]
     context: str
+    normalized_term: str  # Added to store the normalized version
 
 class DocumentAnalyzer:
     def __init__(self, config_path: str = "config.json"):
@@ -39,6 +41,7 @@ class DocumentAnalyzer:
             config_path: Path to JSON configuration file
         """
         self.config = self._load_config(config_path)
+        self._prepare_terminology()
         self.pronouns = set([
             "he", "him", "his", "she", "her", "hers", "it", "its",
             "they", "them", "their", "theirs", "we", "us", "our", "ours",
@@ -64,6 +67,73 @@ class DocumentAnalyzer:
             logger.error(f"Error parsing config file: {e}")
             sys.exit(1)
 
+    def _prepare_terminology(self):
+        """Prepare terminology for efficient matching."""
+        self.term_groups = {}
+        self.max_term_words = 1  # Track longest term for window size
+        
+        for group_name, terms in self.config["terminology_groups"].items():
+            normalized_terms = {}
+            for term in terms:
+                # Generate variations of the term
+                variations = self._generate_term_variations(term)
+                for variation in variations:
+                    normalized = self._normalize_term(variation)
+                    normalized_terms[normalized] = {
+                        'original': term,
+                        'group': group_name
+                    }
+                    self.max_term_words = max(
+                        self.max_term_words,
+                        len(normalized.split())
+                    )
+            self.term_groups[group_name] = normalized_terms
+
+    def _generate_term_variations(self, term: str) -> Set[str]:
+        """Generate common variations of a term."""
+        variations = {term}
+        
+        # Handle common separators and their variations
+        separators = [' ', '-', '_', '&', 'and']
+        words = re.split(r'[-_\s&]+', term)
+        
+        if len(words) > 1:
+            # Generate variations with different separators
+            for sep in separators:
+                variations.add(sep.join(words))
+            
+            # Handle special case for '&' and 'and'
+            if '&' in term:
+                variations.add(term.replace('&', 'and'))
+            if 'and' in term:
+                variations.add(term.replace('and', '&'))
+                
+            # Handle optional words in parentheses
+            # Example: "integration (and) test" -> ["integration test", "integration and test"]
+            term_without_optional = re.sub(r'\s*\([^)]+\)\s*', ' ', term)
+            if term_without_optional != term:
+                variations.add(term_without_optional.strip())
+                
+        return variations
+
+    def _normalize_term(self, term: str) -> str:
+        """Normalize a term for consistent matching."""
+        # Convert to lowercase and replace multiple spaces with single space
+        normalized = ' '.join(term.lower().split())
+        # Replace various separators with space
+        normalized = re.sub(r'[-_&]', ' ', normalized)
+        # Replace 'and' with space
+        normalized = normalized.replace(' and ', ' ')
+        return normalized
+
+    def _sliding_window(self, sequence: List[str], window_size: int):
+        """Create a sliding window iterator over a sequence."""
+        iterators = tee(sequence, window_size)
+        for i, iterator in enumerate(iterators):
+            for _ in range(i):
+                next(iterator, None)
+        return zip(*iterators)
+
     def analyze_document(self, doc_path: str) -> List[Issue]:
         """
         Analyze document for issues.
@@ -82,27 +152,26 @@ class DocumentAnalyzer:
 
         issues = []
         current_section = None
-        page_count = 1  # Approximate page counting
+        page_count = 1
         word_count = 0
-        words_per_page = 500  # Approximate words per page
+        words_per_page = 500
 
         for paragraph in doc.paragraphs:
-            # Check if paragraph is a section header
             if paragraph.style.name.startswith('Heading'):
                 current_section = paragraph.text
 
-            words = paragraph.text.lower().split()
-            word_count += len(words)
+            # Split text into words while preserving original format
+            original_words = paragraph.text.split()
+            word_count += len(original_words)
             
-            # Update page count
             if word_count >= words_per_page:
                 page_count += 1
                 word_count = 0
 
-            # Analyze paragraph
-            issues.extend(self._analyze_pronouns(words, page_count, current_section))
+            # Analyze for different types of issues
+            issues.extend(self._analyze_pronouns(original_words, page_count, current_section))
             issues.extend(self._analyze_contractions(paragraph.text, page_count, current_section))
-            issues.extend(self._analyze_terminology(words, page_count, current_section))
+            issues.extend(self._analyze_terminology(paragraph.text, original_words, page_count, current_section))
 
         return issues
 
@@ -113,10 +182,11 @@ class DocumentAnalyzer:
             if word.lower() in self.pronouns:
                 issues.append(Issue(
                     type="pronoun",
-                    word=word,
+                    term=word,
                     page=page,
                     section=section,
-                    context=self._get_context(words, word)
+                    context=self._get_context(words, word),
+                    normalized_term=word.lower()
                 ))
         return issues
 
@@ -127,42 +197,69 @@ class DocumentAnalyzer:
             if contraction in text.lower():
                 issues.append(Issue(
                     type="contraction",
-                    word=contraction,
+                    term=contraction,
                     page=page,
                     section=section,
-                    context=text
+                    context=text,
+                    normalized_term=contraction.lower()
                 ))
         return issues
 
-    def _analyze_terminology(self, words: List[str], page: int, section: Optional[str]) -> List[Issue]:
+    def _analyze_terminology(self, full_text: str, words: List[str], page: int, section: Optional[str]) -> List[Issue]:
         """Identify inconsistent terminology."""
         issues = []
-        for term_group in self.config["terminology_groups"].values():
-            found_terms = set(word.lower() for word in words if word.lower() in term_group)
-            if len(found_terms) > 1:
-                for term in found_terms:
+        found_terms = {}  # Group -> Set of found terms
+
+        # Look for terms of different lengths up to max_term_words
+        for window_size in range(1, self.max_term_words + 1):
+            for window in self._sliding_window(words, window_size):
+                potential_term = ' '.join(window)
+                normalized_term = self._normalize_term(potential_term)
+                
+                # Check each terminology group
+                for group_name, terms in self.term_groups.items():
+                    if normalized_term in terms:
+                        if group_name not in found_terms:
+                            found_terms[group_name] = set()
+                        found_terms[group_name].add((
+                            potential_term,
+                            normalized_term,
+                            terms[normalized_term]['original']
+                        ))
+
+        # Create issues for groups with multiple terms
+        for group_name, terms in found_terms.items():
+            if len(terms) > 1:
+                for term, normalized_term, original in terms:
                     issues.append(Issue(
                         type="terminology",
-                        word=term,
+                        term=term,
                         page=page,
                         section=section,
-                        context=self._get_context(words, term)
+                        context=self._get_context(words, term),
+                        normalized_term=normalized_term
                     ))
+
         return issues
 
     def _get_context(self, words: List[str], target: str, context_size: int = 5) -> str:
-        """Get surrounding context for a word."""
+        """Get surrounding context for a term."""
         if not self.config.get("include_context", True):
             return ""
             
         try:
-            idx = words.index(target)
-            start = max(0, idx - context_size)
-            end = min(len(words), idx + context_size + 1)
-            return " ".join(words[start:end])
+            # Handle multi-word terms
+            target_words = target.split()
+            for i in range(len(words) - len(target_words) + 1):
+                if words[i:i+len(target_words)] == target_words:
+                    start = max(0, i - context_size)
+                    end = min(len(words), i + len(target_words) + context_size)
+                    return " ".join(words[start:end])
+            return ""
         except ValueError:
             return ""
 
+    # [Previous save_results methods remain unchanged]
     def save_results(self, issues: List[Issue], output_path: str, format: OutputFormat):
         """Save analysis results to file."""
         try:
@@ -181,7 +278,8 @@ class DocumentAnalyzer:
         with open(output_path, 'w') as f:
             for issue in issues:
                 f.write(f"Type: {issue.type}\n")
-                f.write(f"Word: {issue.word}\n")
+                f.write(f"Term: {issue.term}\n")
+                f.write(f"Normalized Form: {issue.normalized_term}\n")
                 f.write(f"Page: {issue.page}\n")
                 if issue.section:
                     f.write(f"Section: {issue.section}\n")
@@ -192,11 +290,12 @@ class DocumentAnalyzer:
     def _save_csv(self, issues: List[Issue], output_path: str):
         with open(output_path, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(["Type", "Word", "Page", "Section", "Context"])
+            writer.writerow(["Type", "Term", "Normalized Form", "Page", "Section", "Context"])
             for issue in issues:
                 writer.writerow([
                     issue.type,
-                    issue.word,
+                    issue.term,
+                    issue.normalized_term,
                     issue.page,
                     issue.section or "",
                     issue.context
@@ -207,7 +306,8 @@ class DocumentAnalyzer:
             f.write("* Document Analysis Results\n")
             for issue in issues:
                 f.write(f"** {issue.type.capitalize()}\n")
-                f.write(f"- Word: {issue.word}\n")
+                f.write(f"- Term: {issue.term}\n")
+                f.write(f"- Normalized Form: {issue.normalized_term}\n")
                 f.write(f"- Page: {issue.page}\n")
                 if issue.section:
                     f.write(f"- Section: {issue.section}\n")
@@ -220,7 +320,8 @@ class DocumentAnalyzer:
             f.write("# Document Analysis Results\n\n")
             for issue in issues:
                 f.write(f"## {issue.type.capitalize()}\n")
-                f.write(f"- Word: {issue.word}\n")
+                f.write(f"- Term: {issue.term}\n")
+                f.write(f"- Normalized Form: {issue.normalized_term}\n")
                 f.write(f"- Page: {issue.page}\n")
                 if issue.section:
                     f.write(f"- Section: {issue.section}\n")
@@ -242,7 +343,8 @@ def main():
 
     # Print results to terminal
     for issue in issues:
-        print(f"Found {issue.type}: {issue.word}")
+        print(f"Found {issue.type}: {issue.term}")
+        print(f"Normalized Form: {issue.normalized_term}")
         print(f"Page: {issue.page}")
         if issue.section:
             print(f"Section: {issue.section}")
