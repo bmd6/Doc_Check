@@ -8,12 +8,15 @@ from enum import Enum
 from pathlib import Path
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import List, Set, Optional, Tuple, DefaultDict
+from typing import List, Set, Optional, Tuple, DefaultDict, Iterator
 from datetime import datetime
 from itertools import tee
 
 import docx
 from docx.oxml.shared import qn
+from docx.oxml.ns import qn
+from docx.table import _Cell, Table
+from docx.text.paragraph import Paragraph
 
 from acronym_finder import AcronymFinder  # Ensure this module is available
 
@@ -21,6 +24,10 @@ from acronym_finder import AcronymFinder  # Ensure this module is available
 # =============================
 # Logging Configuration
 # =============================
+
+# Ensure logs directory exists
+logs_dir = Path("logs")
+logs_dir.mkdir(exist_ok=True)
 
 # Create a custom logger
 logger = logging.getLogger(__name__)
@@ -30,7 +37,8 @@ logger.setLevel(logging.DEBUG)  # Set to DEBUG to capture all levels of logs
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)  # Set higher level for console
 
-file_handler = logging.FileHandler('document_analyzer.log', mode='a')
+log_file_path = logs_dir / 'document_analyzer.log'
+file_handler = logging.FileHandler(log_file_path, mode='a')
 file_handler.setLevel(logging.DEBUG)  # Capture all logs in file
 
 # Create formatters and add them to handlers
@@ -43,6 +51,7 @@ file_handler.setFormatter(formatter)
 # Add handlers to the logger
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
+
 
 # =============================
 # Enums and Data Classes
@@ -205,7 +214,7 @@ class AnalysisSummary:
 
 
 # =============================
-# Helper Classes
+# Helper Classes and Functions
 # =============================
 
 class ProgressTracker:
@@ -295,6 +304,23 @@ class PageCounter:
                 break
         logger.debug(f"Calculated page number {page} based on explicit breaks.")
         return page
+
+
+def iter_block_items(parent) -> Iterator:
+    """
+    Yield each paragraph and table child within parent, in document order.
+    Each returned value is an instance of either Paragraph or Table.
+    """
+    from docx.oxml.text.paragraph import CT_P
+    from docx.oxml.table import CT_Tbl
+    from docx.text.paragraph import Paragraph
+    from docx.table import Table
+
+    for child in parent.element.body:
+        if isinstance(child, CT_P):
+            yield Paragraph(child, parent)
+        elif isinstance(child, CT_Tbl):
+            yield Table(child, parent)
 
 
 # =============================
@@ -552,6 +578,7 @@ class DocumentAnalyzer:
         # Content analysis
         logger.info("Starting content analysis...")
         page_counter = PageCounter(doc)
+        self.page_counter = page_counter  # Store for later use
         content_issues = []
         current_section = None
         current_pos = 0
@@ -732,48 +759,164 @@ class DocumentAnalyzer:
         issues = []
         current_pos = 0
 
-        # First pass: collect styles
-        progress = ProgressTracker(len(doc.paragraphs), "Collecting style information")
+        # Use iter_block_items to process blocks in order
+        blocks = list(iter_block_items(doc))
+        total_blocks = len(blocks)
+        progress = ProgressTracker(total_blocks, "Processing document blocks")
 
-        for paragraph in doc.paragraphs:
-            current_pos += len(paragraph.text)
-            style_info = self._get_paragraph_style_info(paragraph)
-            char_count = len(paragraph.text)
+        previous_block = None
 
-            if paragraph.style.name.startswith('Heading'):
-                try:
-                    header_level = int(paragraph.style.name.split()[-1])
-                except (ValueError, IndexError):
-                    header_level = 1  # Default to level 1 if not found
-                self.font_usage.add_header_font(header_level, style_info, char_count)
-            elif "Caption" in paragraph.style.name:
-                self.font_usage.add_caption_font(style_info, char_count)
-            elif not paragraph.style.name.startswith('TOC'):
-                self.font_usage.add_body_font(style_info, char_count)
+        for block in blocks:
+            if isinstance(block, Paragraph):
+                style_info = self._get_paragraph_style_info(block)
+                char_count = len(block.text)
+
+                if block.style.name.startswith('Heading'):
+                    try:
+                        header_level = int(block.style.name.split()[-1])
+                    except (ValueError, IndexError):
+                        header_level = 1  # Default to level 1 if not found
+                    self.font_usage.add_header_font(header_level, style_info, char_count)
+                elif "Caption" in block.style.name.lower():
+                    self.font_usage.add_caption_font(style_info, char_count)
+                elif not block.style.name.startswith('TOC'):
+                    self.font_usage.add_body_font(style_info, char_count)
+
+                previous_block = block
+
+            elif isinstance(block, Table):
+                # Check for table captions in the previous block
+                has_caption = False
+                if isinstance(previous_block, Paragraph):
+                    if 'caption' in previous_block.style.name.lower():
+                        has_caption = True
+
+                if not has_caption:
+                    # Check the next block for a caption
+                    block_index = blocks.index(block)
+                    if block_index + 1 < total_blocks:
+                        next_block = blocks[block_index + 1]
+                        if isinstance(next_block, Paragraph) and 'caption' in next_block.style.name.lower():
+                            has_caption = True
+
+                if not has_caption:
+                    # Estimate page number based on current_pos
+                    page_number = self.page_counter.get_page_number(current_pos)
+                    issue = StyleIssue(
+                        type="Missing Caption",
+                        element="Table",
+                        expected="Table should have a caption",
+                        found="No caption found",
+                        page=page_number,
+                        section=None,
+                        context=block.rows[0].cells[0].text[:50]  # Sample context
+                    )
+                    issues.append(issue)
+                    self.summary.caption_issues += 1
+                    logger.debug(f"Missing caption for table on page {page_number}")
+
+                # Check if table headers repeat on each page
+                headers_repeat = self._check_table_header_repeat(block)
+                if not headers_repeat:
+                    page_number = self.page_counter.get_page_number(current_pos)
+                    issue = StyleIssue(
+                        type="Table Header",
+                        element="Table",
+                        expected="Table headers should repeat on each page",
+                        found="Table headers do not repeat",
+                        page=page_number,
+                        section=None,
+                        context=block.rows[0].cells[0].text[:50]  # Sample context
+                    )
+                    issues.append(issue)
+                    self.summary.table_style_issues += 1
+                    logger.debug(f"Table headers do not repeat for table on page {page_number}")
+
+                # Collect font usage in tables
+                for row in block.rows:
+                    for cell in row.cells:
+                        for para in cell.paragraphs:
+                            style_info = self._get_paragraph_style_info(para)
+                            char_count = len(para.text)
+                            self.font_usage.add_table_font(style_info, char_count)
+
+                previous_block = block  # Update previous_block to table
 
             progress.update()
 
         progress.complete()
 
-        # Analyze tables
-        if doc.tables:
-            logger.info("Analyzing table styles...")
-            progress = ProgressTracker(len(doc.tables), "Processing tables")
-            for table in doc.tables:
-                for row in table.rows:
-                    for cell in row.cells:
-                        for paragraph in cell.paragraphs:
-                            style_info = self._get_paragraph_style_info(paragraph)
-                            char_count = len(paragraph.text)
-                            self.font_usage.add_table_font(style_info, char_count)
+        # Analyze figures
+        if doc.inline_shapes:
+            logger.info("Analyzing figure styles...")
+            progress = ProgressTracker(len(doc.inline_shapes), "Processing figures")
+            for shape in doc.inline_shapes:
+                # Check for figure captions
+                has_caption = False
+                # Attempt to find the associated paragraph
+                shape_paragraph = self._get_shape_paragraph(doc, shape)
+                if shape_paragraph:
+                    # Check the previous and next blocks for a caption
+                    block_index = None
+                    for idx, block in enumerate(blocks):
+                        if isinstance(block, Paragraph) and block == shape_paragraph:
+                            block_index = idx
+                            break
+                    if block_index is not None:
+                        # Check previous block
+                        if block_index > 0:
+                            prev_block = blocks[block_index - 1]
+                            if isinstance(prev_block, Paragraph) and 'caption' in prev_block.style.name.lower():
+                                has_caption = True
+                        # Check next block
+                        if not has_caption and block_index + 1 < len(blocks):
+                            next_block = blocks[block_index + 1]
+                            if isinstance(next_block, Paragraph) and 'caption' in next_block.style.name.lower():
+                                has_caption = True
+
+                if not has_caption:
+                    # Estimate page number based on shape position
+                    page_number = 1
+                    if shape_paragraph:
+                        current_pos = sum(len(p.text) for p in doc.paragraphs[:doc.paragraphs.index(shape_paragraph)+1])
+                        page_number = self.page_counter.get_page_number(current_pos)
+                    issue = StyleIssue(
+                        type="Missing Caption",
+                        element="Figure",
+                        expected="Figure should have a caption",
+                        found="No caption found",
+                        page=page_number,
+                        section=None,
+                        context=shape_paragraph.text[:50] if shape_paragraph else ""
+                    )
+                    issues.append(issue)
+                    self.summary.caption_issues += 1
+                    logger.debug(f"Missing caption for figure on page {page_number}")
+
                 progress.update()
+
             progress.complete()
 
-        # TODO: Implement actual style consistency checks and populate issues
-        # Placeholder for style issue detection logic
-        # Currently, no style issues are being detected
-        logger.info("Style analysis complete. No style issues detected.")
+        logger.info("Style analysis complete.")
         return issues
+
+    def _check_table_header_repeat(self, table: Table) -> bool:
+        """Check if the table has header rows set to repeat on each page."""
+        for row in table.rows:
+            tr = row._tr  # Access the underlying CT_Row object
+            trPr = tr.trPr  # Access the row properties (trPr)
+            if trPr is not None:
+                tbl_header = trPr.find(qn('w:tblHeader'))  # Find the tblHeader element
+                if tbl_header is not None and tbl_header.val:
+                    return True  # Header is set to repeat
+        return False  # No header row is set to repeat
+
+    def _get_shape_paragraph(self, doc, shape) -> Optional[Paragraph]:
+        """Retrieve the paragraph object associated with the shape."""
+        for paragraph in doc.paragraphs:
+            if paragraph._element.contains(shape._inline):
+                return paragraph
+        return None
 
     def _save_results_with_summary(self, content_issues: List[Issue], style_issues: List[StyleIssue],
                                    output_path: str, format: OutputFormat):
@@ -974,25 +1117,25 @@ class DocumentAnalyzer:
                 f.write("\n** Content Issues\n")
                 for issue in content_issues:
                     f.write(f"\n*** {issue.type}\n")
-                    f.write(f"- Term: {issue.term}\n")
-                    f.write(f"- Page: {issue.page}\n")
+                    f.write(f"- **Term**: {issue.term}\n")
+                    f.write(f"- **Page**: {issue.page}\n")
                     if issue.section:
-                        f.write(f"- Section: {issue.section}\n")
+                        f.write(f"- **Section**: {issue.section}\n")
                     if issue.context:
-                        f.write(f"- Context: {issue.context}\n")
+                        f.write(f"- **Context**: {issue.context}\n")
 
             if style_issues:
                 f.write("\n** Style Issues\n")
                 for issue in style_issues:
                     f.write(f"\n*** {issue.type}\n")
-                    f.write(f"- Element: {issue.element}\n")
-                    f.write(f"- Expected: {issue.expected}\n")
-                    f.write(f"- Found: {issue.found}\n")
-                    f.write(f"- Page: {issue.page}\n")
+                    f.write(f"- **Element**: {issue.element}\n")
+                    f.write(f"- **Expected**: {issue.expected}\n")
+                    f.write(f"- **Found**: {issue.found}\n")
+                    f.write(f"- **Page**: {issue.page}\n")
                     if issue.section:
-                        f.write(f"- Section: {issue.section}\n")
+                        f.write(f"- **Section**: {issue.section}\n")
                     if issue.context:
-                        f.write(f"- Context: {issue.context}\n")
+                        f.write(f"- **Context**: {issue.context}\n")
 
     def _save_md_with_summary(self, content_issues: List[Issue], style_issues: List[StyleIssue], output_path: str):
         """Save results in Markdown format with summary."""
