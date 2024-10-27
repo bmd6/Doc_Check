@@ -13,7 +13,13 @@
             "requirements specification",
             "system requirements",
             "requirements document",
-            "specification"
+            "specification",
+            "specifications"
+        ],
+        "processors": [
+            "processor",
+            "system processor",
+            "main processor"
         ]
     },
     "output_format": ["txt", "csv", "org", "md"],
