@@ -1,0 +1,62 @@
+Document Analysis Summary
+
+Font Usage Analysis
+Body Text Fonts:
+  - Default: 77.0% (392 characters)
+"  - Mixed ('Default', 'Font: Amasis MT Pro'): 13.8% (70 characters)"
+"  - Mixed ('Default', 'Font: Times New Roman'): 9.2% (47 characters)"
+""
+Header Text Fonts:
+  Level 1:
+    - Font: Times New Roman: 51.4% (18 characters)
+    - Default: 48.6% (17 characters)
+  Level 2:
+    - Default: 100.0% (9 characters)
+  Level 3:
+    - Default: 100.0% (9 characters)
+  Level 4:
+    - Default: 100.0% (9 characters)
+  Level 5:
+    - Default: 100.0% (9 characters)
+""
+Table Text Fonts:
+  - Default: 92.2% (188 characters)
+  - Font: Amasis MT Pro: 3.9% (8 characters)
+  - Font: Times New Roman: 3.9% (8 characters)
+
+Content Issues Summary
+Pronouns found,2
+Contractions found,0
+
+Terminology conflicts
+Term,Occurrences
+system processor,2
+main processor,1
+
+Style Issues Summary
+Category,Count
+Font inconsistencies,0
+Caption style issues,0
+Header style issues,0
+Table style issues,0
+
+Acronyms Summary
+Acronym,Definition
+FBI,Federal Bureau of Investigation
+NASA,National Aeronautics and Space Administration
+SYS,
+
+Content Issues
+Type,Term,Page,Section,Context
+Terminology,system processor,1,Heading 1 Level 1a,The system processor is fast
+Terminology,main processor,1,Heading 1 Level 1a,processor is faster than the main processor
+Terminology,system processor,1,Heading 1 Level 1a,The system processor is faster than the main
+Pronoun,We,1,Heading 1 Level 1a,We are doing cool things.
+Pronoun,it,1,Heading 2,[SSS_REQ_728] - ___Verify it does do something.
+
+Style Issues
+Type,Element,Expected,Found,Page,Section,Context
+Inconsistent Font,Body Text,Consistent font formatting,"Mixed ('Default', 'Font: Amasis MT Pro')",1,Heading 2,"[SSS_REQ_45], [SSS_REQ_791]  - ___ Verify that the"
+Inconsistent Font,Body Text,Consistent font formatting,"Mixed ('Default', 'Font: Times New Roman')",1,Heading 2,[SSS_REQ_728] - ___Verify it does do something.
+Table Header,Table,Headers should repeat on each page,Headers do not repeat,1,Heading 5,Column 1
+Table Header,Table,Headers should repeat on each page,Headers do not repeat,1,Heading 5,Column 1

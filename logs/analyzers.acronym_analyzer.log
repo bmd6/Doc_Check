@@ -1,0 +1,30 @@
+2024-10-27 20:32:37,712 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-27 20:32:37,820 - analyzers.acronym_analyzer - INFO - Saved acronym report to test_acronyms.docx
+2024-10-27 20:34:46,499 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-27 20:34:46,611 - analyzers.acronym_analyzer - INFO - Saved acronym report to test_acronyms.docx
+2024-10-27 20:35:37,629 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-27 20:35:37,744 - analyzers.acronym_analyzer - INFO - Saved acronym report to test_acronyms.docx
+2024-10-27 20:48:19,423 - analyzers.acronym_analyzer - INFO - Loaded 2 known acronyms from known_acronyms.csv
+2024-10-27 20:48:19,424 - analyzers.acronym_analyzer - ERROR - Error loading excluded acronyms: [Errno 2] No such file or directory: 'excluded_acronyms.csv'
+2024-10-27 20:48:19,424 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-27 20:48:19,502 - analyzers.acronym_analyzer - ERROR - Error analyzing document: 'AcronymAnalyzer' object has no attribute 'process_paragraph'
+2024-10-27 20:49:12,777 - analyzers.acronym_analyzer - INFO - Loaded 2 known acronyms from known_acronyms.csv
+2024-10-27 20:49:12,801 - analyzers.acronym_analyzer - INFO - Loaded 3 excluded acronyms from exclude_acronyms.csv
+2024-10-27 20:49:12,802 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-27 20:49:12,877 - analyzers.acronym_analyzer - ERROR - Error analyzing document: 'AcronymAnalyzer' object has no attribute 'process_paragraph'
+2024-10-27 20:50:52,699 - analyzers.acronym_analyzer - INFO - Loaded 2 known acronyms from known_acronyms.csv
+2024-10-27 20:50:52,703 - analyzers.acronym_analyzer - INFO - Loaded 3 excluded acronyms from exclude_acronyms.csv
+2024-10-27 20:50:52,704 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-27 20:50:52,810 - analyzers.acronym_analyzer - INFO - Saved acronym report to test_acronyms.docx
+2024-10-27 20:52:18,235 - analyzers.acronym_analyzer - INFO - Loaded 2 known acronyms from known_acronyms.csv
+2024-10-27 20:52:18,236 - analyzers.acronym_analyzer - INFO - Loaded 3 excluded acronyms from exclude_acronyms.csv
+2024-10-27 20:52:18,237 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-27 20:52:18,350 - analyzers.acronym_analyzer - INFO - Saved acronym report to test_acronyms.docx
+2024-10-27 20:53:19,382 - analyzers.acronym_analyzer - INFO - Loaded 2 known acronyms from known_acronyms.csv
+2024-10-27 20:53:19,384 - analyzers.acronym_analyzer - INFO - Loaded 3 excluded acronyms from exclude_acronyms.csv
+2024-10-27 20:53:19,385 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-27 20:53:19,502 - analyzers.acronym_analyzer - INFO - Saved acronym report to test_acronyms.docx
+2024-10-27 20:53:54,585 - analyzers.acronym_analyzer - INFO - Loaded 2 known acronyms from known_acronyms.csv
+2024-10-27 20:53:54,596 - analyzers.acronym_analyzer - INFO - Loaded 1 excluded acronyms from exclude_acronyms.csv
+2024-10-27 20:53:54,598 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-27 20:53:54,709 - analyzers.acronym_analyzer - INFO - Saved acronym report to test_acronyms.docx
