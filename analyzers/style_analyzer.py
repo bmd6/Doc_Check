@@ -1,4 +1,4 @@
-# analyzers/style_analyzer.py
+import re
 from typing import List, Optional, Dict, Tuple
 from docx.document import Document
 from docx.text.paragraph import Paragraph
@@ -119,14 +119,18 @@ class StyleAnalyzer:
         Returns:
             Boolean indicating if headers repeat
         """
-        for row in table.rows:
-            tr = row._tr  # Access the underlying CT_Row object
-            trPr = tr.trPr  # Access the row properties
-            if trPr is not None:
-                tbl_header = trPr.find(qn('w:tblHeader'))
-                if tbl_header is not None and tbl_header.val:
-                    return True
-        return False
+        try:
+            for row in table.rows:
+                tr = row._tr  # Access the underlying CT_Row object
+                trPr = tr.trPr  # Access the row properties
+                if trPr is not None:
+                    tbl_header = trPr.find(qn('./w:tblHeader')) # Find tblHeader element using xpath
+                    if tbl_header and tbl_header[0].get(qn('w:val')) in ('1', 'true', True):
+                        return True
+            return False
+        except Exception as e:
+            logger.debug(f"Error checking table header repeat: {e}")
+            return False
 
     def _process_table_cell(self, cell: _Cell) -> Tuple[str, Dict[str, int]]:
         """
@@ -141,13 +145,16 @@ class StyleAnalyzer:
         text = []
         font_usage = {}
         
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                if run.text.strip():
-                    font_info = self._get_font_info(run)
-                    font_str = str(font_info)
-                    font_usage[font_str] = font_usage.get(font_str, 0) + len(run.text)
-                    text.append(run.text)
+        try:
+            for paragraph in cell.paragraphs:
+                for run in paragraph.runs:
+                    if run.text.strip():
+                        font_info = self._get_font_info(run)
+                        font_str = str(font_info)
+                        font_usage[font_str] = font_usage.get(font_str, 0) + len(run.text)
+                        text.append(run.text)
+        except Exception as e:
+            logger.debug(f"Error processing table cell: {e}")
         
         return ' '.join(text), font_usage
 
@@ -240,7 +247,14 @@ class StyleAnalyzer:
         issues = []
 
         # Check header rows repeat
-        if not self._check_table_header_repeat(table):
+        has_repeating_header = False
+        try:
+            has_repeating_header = self._check_table_header_repeat(table)
+        except Exception as e:
+            logger.debug(f"Error checking table headers: {e}")
+
+        
+        if not has_repeating_header and len(table.rows) > 1:
             issues.append(StyleIssue(
                 type="Table Header",
                 element="Table",
@@ -252,25 +266,28 @@ class StyleAnalyzer:
             ))
 
         # Process cells
-        for row in table.rows:
-            for cell in row.cells:
-                text, font_usage = self._process_table_cell(cell)
-                
-                # Track font usage
-                for font_str, count in font_usage.items():
-                    self.font_usage.add_table_font(font_str, count)
-                
-                # Check for inconsistent formatting within cells
-                if len(font_usage) > 1:
-                    issues.append(StyleIssue(
-                        type="Table Cell Format",
-                        element="Table Cell",
-                        expected="Consistent font formatting",
-                        found=f"Mixed fonts: {', '.join(font_usage.keys())}",
-                        page=page,
-                        section=section,
-                        context=text[:50]
-                    ))
+        try:
+            for row in table.rows:
+                for cell in row.cells:
+                    text, font_usage = self._process_table_cell(cell)
+                    
+                    # Track font usage
+                    for font_str, count in font_usage.items():
+                        self.font_usage.add_table_font(font_str, count)
+                    
+                    # Check for inconsistent formatting within cells
+                    if len(font_usage) > 1:
+                        issues.append(StyleIssue(
+                            type="Table Cell Format",
+                            element="Table Cell",
+                            expected="Consistent font formatting",
+                            found=f"Mixed fonts: {', '.join(font_usage.keys())}",
+                            page=page,
+                            section=section,
+                            context=text[:50]
+                        ))
+        except Exception as e:
+            logger.debug(f"Error processing table cells: {e}")
 
         return issues
 
