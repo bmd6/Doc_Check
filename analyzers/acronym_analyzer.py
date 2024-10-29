@@ -1,4 +1,3 @@
-# analyzers/acronym_analyzer.py
 import re
 import pandas as pd
 from typing import Dict, Optional, Set, List
@@ -39,17 +38,19 @@ class AcronymAnalyzer:
         # Initialize found_acronyms with known acronyms
         for acronym, definition in self.known_acronyms.items():
             if acronym not in self.excluded_acronyms:
-                self.found_acronyms[acronym] = {
-                    'definition': definition,
-                    'pages': set()
-                }
+                acronym = str(acronym).strip()
+                if acronym and acronym.lower() != 'nan':  # Additional check to exclude 'nan' strings
+                    self.found_acronyms[acronym] = {
+                        'definition': definition.strip() if definition else None,
+                        'pages': set()
+                    }
         
-        # Set up acronym patterns
+        # Set up acronym patterns with at least one uppercase letter
         self.acronym_patterns = [
-            r'^[A-Z0-9][A-Z0-9]{1,5}$',  # Basic acronyms (2-6 chars)
-            r'^[A-Z][&][A-Z]$',           # Special case for X&Y format
-            r'^[A-Z]+/[A-Z]+$',           # Slash-separated acronyms
-            r'^[A-Z0-9]+-[A-Z0-9]+$'      # Hyphenated acronyms
+            r'^(?=.*[A-Z])[A-Z0-9]{2,6}$',  # Basic acronyms (2-6 chars, at least one letter)
+            r'^[A-Z][&][A-Z]$',             # Special case for X&Y format
+            r'^(?=.*[A-Z])[A-Z]+/[A-Z]+$',  # Slash-separated acronyms (at least one letter)
+            r'^(?=.*[A-Z])[A-Z0-9]+-[A-Z0-9]+$'  # Hyphenated acronyms (at least one letter)
         ]
         
         # Set up default exclusions
@@ -62,15 +63,25 @@ class AcronymAnalyzer:
     def _load_known_acronyms(self, csv_path: str) -> Dict[str, str]:
         """
         Load known acronyms from CSV file.
-        
+    
         Args:
             csv_path: Path to CSV file containing acronyms and definitions
-            
+    
         Returns:
             Dictionary mapping acronyms to their definitions
         """
         try:
-            df = pd.read_csv(csv_path)
+            df = pd.read_csv(csv_path, dtype={'Acronym': str, 'Definition': str})
+            # Strip whitespace
+            df['Acronym'] = df['Acronym'].str.strip()
+            df['Definition'] = df['Definition'].str.strip()
+            # Drop rows with missing or empty 'Acronym'
+            initial_count = len(df)
+            df = df[df['Acronym'].notna() & (df['Acronym'] != '')]
+            dropped_count = initial_count - len(df)
+            if dropped_count > 0:
+                logger.warning(f"Dropped {dropped_count} rows with missing or empty 'Acronym' in {csv_path}")
+            
             if 'Acronym' in df.columns and 'Definition' in df.columns:
                 acronyms = dict(zip(df['Acronym'], df['Definition']))
                 logger.info(f"Loaded {len(acronyms)} known acronyms from {csv_path}")
@@ -85,22 +96,20 @@ class AcronymAnalyzer:
     def _load_excluded_acronyms(self, csv_path: str) -> Set[str]:
         """
         Load acronyms to exclude from CSV file.
-        
+    
         Args:
             csv_path: Path to CSV file containing acronyms to exclude
-            
+    
         Returns:
             Set of acronyms to exclude from analysis
         """
         try:
-            df = pd.read_csv(csv_path)
-            if 'Exclusion' in df.columns:
-                exclusions = set(df['Exclusion'].dropna())
-                logger.info(f"Loaded {len(exclusions)} excluded acronyms from {csv_path}")
-                return exclusions
-            else:
-                logger.error(f"CSV file {csv_path} missing required column (Exclusion)")
-                return set()
+            df = pd.read_csv(csv_path, dtype={'Exclusion': str})
+            # Strip whitespace and drop NaN
+            df['Exclusion'] = df['Exclusion'].str.strip()
+            exclusions = set(df['Exclusion'].dropna())
+            logger.info(f"Loaded {len(exclusions)} excluded acronyms from {csv_path}")
+            return exclusions
         except Exception as e:
             logger.error(f"Error loading excluded acronyms: {e}")
             return set()
@@ -118,8 +127,23 @@ class AcronymAnalyzer:
         # Check exclusions first
         if word in self.default_exclusions or word in self.excluded_acronyms:
             return False
-            
-        return any(bool(re.match(pattern, word)) for pattern in self.acronym_patterns)
+        
+        # Exclude purely numeric words
+        if re.fullmatch(r'\d+', word):
+            logger.debug(f"Excluded purely numeric word: {word}")
+            return False
+        
+        # Exclude numeric words with dashes or slashes (e.g., "0-1", "1/2")
+        if re.fullmatch(r'(\d+[-/])+(\d+)', word):
+            logger.debug(f"Excluded numeric word with separators: {word}")
+            return False
+        
+        # Check against acronym patterns (ensures at least one letter due to patterns)
+        is_match = any(bool(re.match(pattern, word)) for pattern in self.acronym_patterns)
+        if is_match:
+            return True
+        else:
+            return False
 
     def _find_potential_definition(self, text: str, acronym: str) -> Optional[str]:
         """
@@ -179,19 +203,28 @@ class AcronymAnalyzer:
             page_number = int(page_number)  # Ensure page_number is an integer
             
             for word in words:
+                original_word = word  # Keep the original word for logging
+                word = str(word).strip()  # Ensure word is a string and remove whitespace
                 if self._is_potential_acronym(word):
-                    if word not in self.found_acronyms:
-                        definition = self._find_potential_definition(text, word)
-                        if not definition:
-                            definition = self.known_acronyms.get(word)
-                        
-                        self.found_acronyms[word] = {
-                            'definition': definition,
-                            'pages': {page_number}  # Initialize with a set containing the current page
-                        }
-                    else:
-                        # Add the page number to existing pages set
-                        self.found_acronyms[word]['pages'].add(page_number)
+                    if word and word.lower() != 'nan':  # Additional check
+                        if word not in self.found_acronyms:
+                            definition = self._find_potential_definition(text, word)
+                            if not definition:
+                                definition = self.known_acronyms.get(word)
+                            
+                            self.found_acronyms[word] = {
+                                'definition': definition.strip() if definition else None,
+                                'pages': {page_number}
+                            }
+                        else:
+                            # Add the page number to existing pages set
+                            self.found_acronyms[word]['pages'].add(page_number)
+                else:
+                    logger.debug(f"Word '{original_word}' is not a valid acronym and was excluded.")
+            
+                # Debugging: Log the type of the word
+                if not isinstance(word, str):
+                    logger.warning(f"Non-string acronym detected: {word} (type: {type(word)})")
         except Exception as e:
             logger.error(f"Error processing text: {e}")
             logger.debug(f"Text sample: {text[:100]}...")
@@ -224,6 +257,15 @@ class AcronymAnalyzer:
         Returns:
             Word document containing formatted acronym report
         """
+        # Debugging: Check types of all acronyms
+        non_string_keys = [k for k in self.found_acronyms.keys() if not isinstance(k, str)]
+        if non_string_keys:
+            logger.error(f"Non-string acronym keys detected: {non_string_keys}")
+            # Optionally, skip these entries instead of raising an error
+            # Or clean them up
+            self.found_acronyms = {k: v for k, v in self.found_acronyms.items() if isinstance(k, str)}
+            logger.info(f"Skipped {len(non_string_keys)} non-string acronym entries.")
+
         doc = Document()
         
         # Add title
@@ -247,7 +289,7 @@ class AcronymAnalyzer:
         headers[1].text = 'Definition'
         
         # Populate table, sorted alphabetically by acronym
-        for acronym, info in sorted(self.found_acronyms.items()):
+        for acronym, info in sorted(self.found_acronyms.items(), key=lambda item: item[0].upper()):
             row = table.add_row().cells
             row[0].text = acronym
             row[1].text = info['definition'] or 'Unknown'
@@ -261,7 +303,7 @@ class AcronymAnalyzer:
             self.reset_page_tracking()
             
             # Count total elements for progress tracking
-            total_elements = len(doc.paragraphs) + sum(1 for _ in doc.tables)
+            total_elements = len(doc.paragraphs) + len(doc.tables)
             progress = ProgressTracker(total_elements, "Analyzing acronyms")
             
             # Process paragraphs
