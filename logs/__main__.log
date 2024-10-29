@@ -78,3 +78,47 @@
 2024-10-27 20:53:54,712 - __main__ - INFO - Generated csv report: analysis_results.csv
 2024-10-27 20:53:54,713 - __main__ - INFO - Generated org report: analysis_results.org
 2024-10-27 20:53:54,715 - __main__ - INFO - Generated md report: analysis_results.md
+2024-10-28 19:39:49,723 - __main__ - INFO - Initializing document analyzer...
+2024-10-28 19:39:49,736 - __main__ - INFO - Document analyzer initialized successfully
+2024-10-28 19:39:49,737 - __main__ - INFO - Starting analysis of document: test.docx
+2024-10-28 19:39:49,771 - __main__ - INFO - Document loaded successfully. Found 27 paragraphs.
+2024-10-28 19:39:49,877 - __main__ - INFO - Analyzing acronyms...
+2024-10-28 19:39:49,928 - __main__ - INFO - Generating analysis reports...
+2024-10-28 19:39:49,929 - __main__ - INFO - Generated txt report: analysis_results.txt
+2024-10-28 19:39:49,930 - __main__ - INFO - Generated csv report: analysis_results.csv
+2024-10-28 19:39:49,931 - __main__ - INFO - Generated org report: analysis_results.org
+2024-10-28 19:39:49,932 - __main__ - INFO - Generated md report: analysis_results.md
+2024-10-28 19:49:28,931 - __main__ - INFO - Initializing document analyzer...
+2024-10-28 19:49:28,937 - __main__ - INFO - Document analyzer initialized successfully
+2024-10-28 19:49:28,937 - __main__ - INFO - Starting analysis of document: test.docx
+2024-10-28 19:49:28,952 - __main__ - INFO - Document loaded successfully. Found 27 paragraphs.
+2024-10-28 19:49:29,038 - __main__ - INFO - Analyzing acronyms...
+2024-10-28 19:49:29,088 - __main__ - INFO - Generating analysis reports...
+2024-10-28 19:49:29,088 - __main__ - INFO - Generated txt report: analysis_results.txt
+2024-10-28 19:49:29,088 - __main__ - INFO - Generated csv report: analysis_results.csv
+2024-10-28 19:49:29,088 - __main__ - INFO - Generated org report: analysis_results.org
+2024-10-28 19:49:29,088 - __main__ - INFO - Generated md report: analysis_results.md
+2024-10-28 21:13:53,908 - __main__ - INFO - Initializing document analyzer...
+2024-10-28 21:13:53,913 - __main__ - INFO - Document analyzer initialized successfully
+2024-10-28 21:13:53,913 - __main__ - INFO - Starting analysis of document: test.docx
+2024-10-28 21:13:53,927 - __main__ - INFO - Document loaded successfully. Found 27 paragraphs.
+2024-10-28 21:13:54,000 - __main__ - INFO - Analyzing acronyms...
+2024-10-28 21:13:54,009 - __main__ - ERROR - Error analyzing document: 'AcronymAnalyzer' object has no attribute 'chars_per_page'
+2024-10-28 21:13:54,010 - __main__ - ERROR - Error during analysis: 'AcronymAnalyzer' object has no attribute 'chars_per_page'
+2024-10-28 21:16:10,999 - __main__ - INFO - Initializing document analyzer...
+2024-10-28 21:16:11,004 - __main__ - INFO - Document analyzer initialized successfully
+2024-10-28 21:16:11,004 - __main__ - INFO - Starting analysis of document: test.docx
+2024-10-28 21:16:11,022 - __main__ - INFO - Document loaded successfully. Found 27 paragraphs.
+2024-10-28 21:16:11,091 - __main__ - INFO - Analyzing acronyms...
+2024-10-28 21:16:11,101 - __main__ - ERROR - Error analyzing document: 'AcronymAnalyzer' object has no attribute 'chars_per_page'
+2024-10-28 21:16:11,101 - __main__ - ERROR - Error during analysis: 'AcronymAnalyzer' object has no attribute 'chars_per_page'
+2024-10-28 21:19:36,806 - __main__ - INFO - Initializing document analyzer...
+2024-10-28 21:19:36,810 - __main__ - INFO - Document analyzer initialized successfully
+2024-10-28 21:19:36,810 - __main__ - INFO - Starting analysis of document: test.docx
+2024-10-28 21:19:36,822 - __main__ - INFO - Document loaded successfully. Found 27 paragraphs.
+2024-10-28 21:19:36,898 - __main__ - INFO - Analyzing acronyms...
+2024-10-28 21:19:36,941 - __main__ - INFO - Generating analysis reports...
+2024-10-28 21:19:36,942 - __main__ - INFO - Generated txt report: analysis_results.txt
+2024-10-28 21:19:36,944 - __main__ - INFO - Generated csv report: analysis_results.csv
+2024-10-28 21:19:36,945 - __main__ - INFO - Generated org report: analysis_results.org
+2024-10-28 21:19:36,945 - __main__ - INFO - Generated md report: analysis_results.md

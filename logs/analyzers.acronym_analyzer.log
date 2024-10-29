@@ -28,3 +28,25 @@
 2024-10-27 20:53:54,596 - analyzers.acronym_analyzer - INFO - Loaded 1 excluded acronyms from exclude_acronyms.csv
 2024-10-27 20:53:54,598 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
 2024-10-27 20:53:54,709 - analyzers.acronym_analyzer - INFO - Saved acronym report to test_acronyms.docx
+2024-10-28 19:39:49,797 - analyzers.acronym_analyzer - INFO - Loaded 2 known acronyms from known_acronyms.csv
+2024-10-28 19:39:49,804 - analyzers.acronym_analyzer - INFO - Loaded 1 excluded acronyms from exclude_acronyms.csv
+2024-10-28 19:39:49,805 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-28 19:39:49,928 - analyzers.acronym_analyzer - INFO - Saved acronym report to test_acronyms.docx
+2024-10-28 19:49:28,960 - analyzers.acronym_analyzer - INFO - Loaded 2 known acronyms from known_acronyms.csv
+2024-10-28 19:49:28,960 - analyzers.acronym_analyzer - INFO - Loaded 1 excluded acronyms from exclude_acronyms.csv
+2024-10-28 19:49:28,960 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-28 19:49:29,086 - analyzers.acronym_analyzer - INFO - Saved acronym report to test_acronyms.docx
+2024-10-28 21:13:53,930 - analyzers.acronym_analyzer - INFO - Loaded 2 known acronyms from known_acronyms.csv
+2024-10-28 21:13:53,931 - analyzers.acronym_analyzer - INFO - Loaded 1 excluded acronyms from exclude_acronyms.csv
+2024-10-28 21:13:53,932 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-28 21:13:54,009 - analyzers.acronym_analyzer - ERROR - Error analyzing document: 'AcronymAnalyzer' object has no attribute 'chars_per_page'
+2024-10-28 21:16:11,027 - analyzers.acronym_analyzer - INFO - Loaded 2 known acronyms from known_acronyms.csv
+2024-10-28 21:16:11,029 - analyzers.acronym_analyzer - INFO - Loaded 1 excluded acronyms from exclude_acronyms.csv
+2024-10-28 21:16:11,029 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-28 21:16:11,100 - analyzers.acronym_analyzer - ERROR - Error analyzing document: 'AcronymAnalyzer' object has no attribute 'chars_per_page'
+2024-10-28 21:19:36,827 - analyzers.acronym_analyzer - INFO - Loaded 2 known acronyms from known_acronyms.csv
+2024-10-28 21:19:36,829 - analyzers.acronym_analyzer - INFO - Loaded 1 excluded acronyms from exclude_acronyms.csv
+2024-10-28 21:19:36,830 - analyzers.acronym_analyzer - INFO - Acronym analyzer initialized for test.docx
+2024-10-28 21:19:36,830 - analyzers.acronym_analyzer - DEBUG - Known acronyms: 2
+2024-10-28 21:19:36,830 - analyzers.acronym_analyzer - DEBUG - Excluded acronyms: 1
+2024-10-28 21:19:36,940 - analyzers.acronym_analyzer - INFO - Saved acronym report to test_acronyms.docx

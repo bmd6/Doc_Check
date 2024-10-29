@@ -72,3 +72,48 @@
 2024-10-27 20:53:54,616 - analyzers.content_analyzer - DEBUG - Pronoun found: We on page 1
 2024-10-27 20:53:54,623 - analyzers.content_analyzer - DEBUG - Context for term 'it': [SSS_REQ_728] - ___Verify it does do something.
 2024-10-27 20:53:54,623 - analyzers.content_analyzer - DEBUG - Pronoun found: it on page 1
+2024-10-28 19:39:49,734 - analyzers.content_analyzer - INFO - Terminology preparation complete
+2024-10-28 19:39:49,735 - analyzers.content_analyzer - INFO - Content analyzer initialized successfully
+2024-10-28 19:39:49,813 - analyzers.content_analyzer - DEBUG - Context for term 'system processor': The system processor is fast
+2024-10-28 19:39:49,818 - analyzers.content_analyzer - DEBUG - Context for term 'system processor': The system processor is faster than the main
+2024-10-28 19:39:49,818 - analyzers.content_analyzer - DEBUG - Context for term 'main processor': processor is faster than the main processor
+2024-10-28 19:39:49,825 - analyzers.content_analyzer - DEBUG - Context for term 'We': We are doing cool things.
+2024-10-28 19:39:49,825 - analyzers.content_analyzer - DEBUG - Pronoun found: We on page 1
+2024-10-28 19:39:49,834 - analyzers.content_analyzer - DEBUG - Context for term 'it': [SSS_REQ_728] - ___Verify it does do something.
+2024-10-28 19:39:49,834 - analyzers.content_analyzer - DEBUG - Pronoun found: it on page 1
+2024-10-28 19:49:28,936 - analyzers.content_analyzer - INFO - Terminology preparation complete
+2024-10-28 19:49:28,937 - analyzers.content_analyzer - INFO - Content analyzer initialized successfully
+2024-10-28 19:49:28,974 - analyzers.content_analyzer - DEBUG - Context for term 'system processor': The system processor is fast
+2024-10-28 19:49:28,994 - analyzers.content_analyzer - DEBUG - Context for term 'main processor': processor is faster than the main processor
+2024-10-28 19:49:28,994 - analyzers.content_analyzer - DEBUG - Context for term 'system processor': The system processor is faster than the main
+2024-10-28 19:49:29,001 - analyzers.content_analyzer - DEBUG - Context for term 'We': We are doing cool things.
+2024-10-28 19:49:29,001 - analyzers.content_analyzer - DEBUG - Pronoun found: We on page 1
+2024-10-28 19:49:29,007 - analyzers.content_analyzer - DEBUG - Context for term 'it': [SSS_REQ_728] - ___Verify it does do something.
+2024-10-28 19:49:29,007 - analyzers.content_analyzer - DEBUG - Pronoun found: it on page 1
+2024-10-28 21:13:53,912 - analyzers.content_analyzer - INFO - Terminology preparation complete
+2024-10-28 21:13:53,912 - analyzers.content_analyzer - INFO - Content analyzer initialized successfully
+2024-10-28 21:13:53,939 - analyzers.content_analyzer - DEBUG - Context for term 'system processor': The system processor is fast
+2024-10-28 21:13:53,948 - analyzers.content_analyzer - DEBUG - Context for term 'main processor': processor is faster than the main processor
+2024-10-28 21:13:53,948 - analyzers.content_analyzer - DEBUG - Context for term 'system processor': The system processor is faster than the main
+2024-10-28 21:13:53,953 - analyzers.content_analyzer - DEBUG - Context for term 'We': We are doing cool things.
+2024-10-28 21:13:53,953 - analyzers.content_analyzer - DEBUG - Pronoun found: We on page 1
+2024-10-28 21:13:53,960 - analyzers.content_analyzer - DEBUG - Context for term 'it': [SSS_REQ_728] - ___Verify it does do something.
+2024-10-28 21:13:53,960 - analyzers.content_analyzer - DEBUG - Pronoun found: it on page 1
+2024-10-28 21:16:11,003 - analyzers.content_analyzer - INFO - Terminology preparation complete
+2024-10-28 21:16:11,003 - analyzers.content_analyzer - INFO - Content analyzer initialized successfully
+2024-10-28 21:16:11,036 - analyzers.content_analyzer - DEBUG - Context for term 'system processor': The system processor is fast
+2024-10-28 21:16:11,043 - analyzers.content_analyzer - DEBUG - Context for term 'system processor': The system processor is faster than the main
+2024-10-28 21:16:11,043 - analyzers.content_analyzer - DEBUG - Context for term 'main processor': processor is faster than the main processor
+2024-10-28 21:16:11,048 - analyzers.content_analyzer - DEBUG - Context for term 'We': We are doing cool things.
+2024-10-28 21:16:11,048 - analyzers.content_analyzer - DEBUG - Pronoun found: We on page 1
+2024-10-28 21:16:11,054 - analyzers.content_analyzer - DEBUG - Context for term 'it': [SSS_REQ_728] - ___Verify it does do something.
+2024-10-28 21:16:11,054 - analyzers.content_analyzer - DEBUG - Pronoun found: it on page 1
+2024-10-28 21:19:36,809 - analyzers.content_analyzer - INFO - Terminology preparation complete
+2024-10-28 21:19:36,809 - analyzers.content_analyzer - INFO - Content analyzer initialized successfully
+2024-10-28 21:19:36,836 - analyzers.content_analyzer - DEBUG - Context for term 'system processor': The system processor is fast
+2024-10-28 21:19:36,843 - analyzers.content_analyzer - DEBUG - Context for term 'system processor': The system processor is faster than the main
+2024-10-28 21:19:36,843 - analyzers.content_analyzer - DEBUG - Context for term 'main processor': processor is faster than the main processor
+2024-10-28 21:19:36,849 - analyzers.content_analyzer - DEBUG - Context for term 'We': We are doing cool things.
+2024-10-28 21:19:36,849 - analyzers.content_analyzer - DEBUG - Pronoun found: We on page 1
+2024-10-28 21:19:36,854 - analyzers.content_analyzer - DEBUG - Context for term 'it': [SSS_REQ_728] - ___Verify it does do something.
+2024-10-28 21:19:36,854 - analyzers.content_analyzer - DEBUG - Pronoun found: it on page 1
