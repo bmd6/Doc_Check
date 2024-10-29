@@ -21,14 +21,7 @@ class AcronymAnalyzer:
     
     def __init__(self, docx_path: str, known_acronyms_csv: Optional[str] = None,
                  excluded_acronyms_csv: Optional[str] = None):
-        """
-        Initialize the acronym analyzer.
-        
-        Args:
-            docx_path: Path to the Word document
-            known_acronyms_csv: Optional path to CSV file with known acronyms
-            excluded_acronyms_csv: Optional path to CSV file with acronyms to exclude
-        """
+        """Initialize the acronym analyzer."""
         self.docx_path = Path(docx_path)
         if not self.docx_path.exists():
             raise FileNotFoundError(f"Document not found: {docx_path}")
@@ -161,17 +154,17 @@ class AcronymAnalyzer:
         self.current_page = 1
         self.chars_on_page = 0
 
-    def update_page_tracking(self, text_length: int):
+    def update_page_tracking(self, text_length: int) -> None:
         """
         Update page tracking based on text length.
         
         Args:
             text_length: Length of text being processed
         """
-        self.chars_on_page += text_length
+        self.chars_on_page += int(text_length)  # Ensure integer
         if self.chars_on_page > self.chars_per_page:
             self.current_page += 1
-            self.chars_on_page = text_length
+            self.chars_on_page = int(text_length)  # Ensure integer
 
     def process_text(self, text: str, page_number: int) -> None:
         """
@@ -179,58 +172,43 @@ class AcronymAnalyzer:
         
         Args:
             text: Text to analyze
-            page_number: Current page number (must be int)
+            page_number: Current page number
         """
         try:
-            # Ensure page_number is an integer
-            page_number = int(page_number)
             words = re.findall(r'\b[\w/&-]+\b', text)
+            page_number = int(page_number)  # Ensure page_number is an integer
             
             for word in words:
                 if self._is_potential_acronym(word):
                     if word not in self.found_acronyms:
-                        # Look for definition in surrounding text
                         definition = self._find_potential_definition(text, word)
-                        # If no definition found in text, use known acronym definition
                         if not definition:
                             definition = self.known_acronyms.get(word)
                         
                         self.found_acronyms[word] = {
                             'definition': definition,
-                            'pages': set()
+                            'pages': {page_number}  # Initialize with a set containing the current page
                         }
-                    
-                    self.found_acronyms[word]['pages'].add(page_number)
+                    else:
+                        # Add the page number to existing pages set
+                        self.found_acronyms[word]['pages'].add(page_number)
         except Exception as e:
-            logger.error(f"Error processing text for acronyms: {e}")
+            logger.error(f"Error processing text: {e}")
+            logger.debug(f"Text sample: {text[:100]}...")
             logger.debug(f"Page number type: {type(page_number)}, value: {page_number}")
             raise
 
     def process_paragraph(self, paragraph: Paragraph, page_number: int) -> None:
-        """
-        Process a paragraph to find acronyms.
-        
-        Args:
-            paragraph: Paragraph to analyze
-            page_number: Current page number (must be int)
-        """
+        """Process a paragraph to find acronyms."""
         try:
-            page_number = int(page_number)
             self.process_text(paragraph.text, page_number)
         except Exception as e:
             logger.error(f"Error processing paragraph: {e}")
             raise
 
     def process_table(self, table: Table, page_number: int) -> None:
-        """
-        Process a table to find acronyms.
-        
-        Args:
-            table: Table to analyze
-            page_number: Current page number (must be int)
-        """
+        """Process a table to find acronyms."""
         try:
-            page_number = int(page_number)
             for row in table.rows:
                 for cell in row.cells:
                     for paragraph in cell.paragraphs:
@@ -277,12 +255,7 @@ class AcronymAnalyzer:
         return doc
 
     def analyze_document(self) -> Dict[str, Dict]:
-        """
-        Analyze the entire document for acronyms.
-        
-        Returns:
-            Dictionary containing found acronyms and their information
-        """
+        """Analyze the entire document for acronyms."""
         try:
             doc = Document(self.docx_path)
             self.reset_page_tracking()
@@ -293,7 +266,8 @@ class AcronymAnalyzer:
             
             # Process paragraphs
             for paragraph in doc.paragraphs:
-                self.update_page_tracking(len(paragraph.text))
+                text_length = len(paragraph.text)
+                self.update_page_tracking(text_length)
                 self.process_paragraph(paragraph, self.current_page)
                 progress.update()
             
@@ -302,7 +276,8 @@ class AcronymAnalyzer:
                 table_text = "".join(
                     cell.text for row in table.rows for cell in row.cells
                 )
-                self.update_page_tracking(len(table_text))
+                text_length = len(table_text)
+                self.update_page_tracking(text_length)
                 self.process_table(table, self.current_page)
                 progress.update()
             
